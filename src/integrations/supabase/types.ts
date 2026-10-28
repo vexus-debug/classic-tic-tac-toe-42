@@ -6092,37 +6092,46 @@ export type Database = {
       treatments: {
         Row: {
           category: string | null
+          cdt_code: string | null
           created_at: string
           description: string | null
           duration: number | null
           id: string
           name: string
           org_id: string
+          patient_name: string | null
           price: number
+          site_scope: string
           status: string
           updated_at: string
         }
         Insert: {
           category?: string | null
+          cdt_code?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
           name: string
           org_id: string
+          patient_name?: string | null
           price?: number
+          site_scope?: string
           status?: string
           updated_at?: string
         }
         Update: {
           category?: string | null
+          cdt_code?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
           name?: string
           org_id?: string
+          patient_name?: string | null
           price?: number
+          site_scope?: string
           status?: string
           updated_at?: string
         }

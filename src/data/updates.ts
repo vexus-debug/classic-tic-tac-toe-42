@@ -13,6 +13,18 @@ export interface UpdateEntry {
 
 export const updates: UpdateEntry[] = [
   {
+    version: "v2.13.1",
+    date: "October 28, 2026",
+    title: "Clearer treatment catalog that works on phones",
+    kind: "improvement",
+    items: [
+      { kind: "fix", text: "Treatment prices are now bold and easy to read in dark mode." },
+      { kind: "fix", text: "Tap any treatment card to edit it; edit buttons are always visible on phones." },
+      { kind: "improvement", text: "Dentists can now edit catalog items." },
+      { kind: "feature", text: "Treatments can carry a CDT procedure code, a patient-friendly name and what they apply to (mouth, quadrant, tooth, surface)." },
+    ],
+  },
+  {
     version: "v2.13.0",
     date: "October 28, 2026",
     title: "Smarter consent forms with patient and dentist signatures",
