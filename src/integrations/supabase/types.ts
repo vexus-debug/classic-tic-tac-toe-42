@@ -5944,6 +5944,7 @@ export type Database = {
       }
       treatment_plan_items: {
         Row: {
+          cdt_code: string | null
           completed_date: string | null
           created_at: string
           description: string
@@ -5955,12 +5956,14 @@ export type Database = {
           plan_id: string
           scheduled_date: string | null
           status: string
+          surfaces: string | null
           tooth_number: string | null
           treatment_id: string | null
           updated_at: string
           visit_number: number
         }
         Insert: {
+          cdt_code?: string | null
           completed_date?: string | null
           created_at?: string
           description: string
@@ -5972,12 +5975,14 @@ export type Database = {
           plan_id: string
           scheduled_date?: string | null
           status?: string
+          surfaces?: string | null
           tooth_number?: string | null
           treatment_id?: string | null
           updated_at?: string
           visit_number?: number
         }
         Update: {
+          cdt_code?: string | null
           completed_date?: string | null
           created_at?: string
           description?: string
@@ -5989,6 +5994,7 @@ export type Database = {
           plan_id?: string
           scheduled_date?: string | null
           status?: string
+          surfaces?: string | null
           tooth_number?: string | null
           treatment_id?: string | null
           updated_at?: string

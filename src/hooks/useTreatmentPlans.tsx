@@ -20,6 +20,9 @@ export interface TreatmentPlan {
   patient_name: string;
   items_count: number;
   completed_count: number;
+  acceptance_status?: string;
+  coverage_percent?: number;
+  insurer_name?: string | null;
 }
 
 export interface TreatmentPlanItem {
@@ -34,6 +37,10 @@ export interface TreatmentPlanItem {
   scheduled_date: string | null;
   completed_date: string | null;
   notes: string | null;
+  phase?: number | null;
+  surfaces?: string | null;
+  cdt_code?: string | null;
+  insurance_amount?: number;
 }
 
 export function useTreatmentPlans() {
@@ -88,7 +95,7 @@ export function useCreateTreatmentPlan() {
       priority?: string;
       start_date?: string;
       target_end_date?: string;
-      items: { treatment_id?: string; description: string; tooth_number?: string; visit_number: number; estimated_cost: number; scheduled_date?: string; notes?: string }[];
+      items: { treatment_id?: string; description: string; tooth_number?: string; surfaces?: string; phase?: number; cdt_code?: string; visit_number: number; estimated_cost: number; scheduled_date?: string; notes?: string }[];
     }) => {
       const totalCost = input.items.reduce((s, i) => s + i.estimated_cost, 0);
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -116,6 +123,9 @@ export function useCreateTreatmentPlan() {
           treatment_id: i.treatment_id || null,
           description: i.description,
           tooth_number: i.tooth_number || null,
+          surfaces: i.surfaces || null,
+          phase: i.phase || null,
+          cdt_code: i.cdt_code || null,
           visit_number: i.visit_number,
           estimated_cost: i.estimated_cost,
           scheduled_date: i.scheduled_date || null,
@@ -167,5 +177,86 @@ export function useUpdatePlanStatus() {
       toast({ title: "Plan status updated" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+}
+
+async function recalcPlanTotal(planId: string) {
+  const db = supabase as any;
+  const { data } = await db.from("treatment_plan_items").select("estimated_cost, status").eq("plan_id", planId);
+  const total = (data || []).filter((i: any) => i.status !== "skipped").reduce((s: number, i: any) => s + Number(i.estimated_cost || 0), 0);
+  await db.from("treatment_plans").update({ total_estimated_cost: total }).eq("id", planId);
+}
+
+function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
+  ["treatment-plans", "treatment-plan-items", "patient-plan-items", "patient-treatment-plans"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+}
+
+export function useUpdatePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, any> }) => {
+      const { error } = await (supabase as any).from("treatment_plans").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateAll(qc); toast({ title: "Plan updated" }); },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+}
+
+export function useDeletePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const db = supabase as any;
+      const { error: e1 } = await db.from("treatment_plan_items").delete().eq("plan_id", id);
+      if (e1) throw e1;
+      const { error } = await db.from("treatment_plans").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateAll(qc); toast({ title: "Plan deleted" }); },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+}
+
+export function useSavePlanItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, plan_id, values }: { id?: string; plan_id: string; values: Record<string, any> }) => {
+      const db = supabase as any;
+      const { error } = id
+        ? await db.from("treatment_plan_items").update(values).eq("id", id)
+        : await db.from("treatment_plan_items").insert({ ...values, plan_id });
+      if (error) throw error;
+      await recalcPlanTotal(plan_id);
+    },
+    onSuccess: () => { invalidateAll(qc); toast({ title: "Procedure saved" }); },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+}
+
+export function useDeletePlanItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, plan_id }: { id: string; plan_id: string }) => {
+      const { error } = await (supabase as any).from("treatment_plan_items").delete().eq("id", id);
+      if (error) throw error;
+      await recalcPlanTotal(plan_id);
+    },
+    onSuccess: () => { invalidateAll(qc); toast({ title: "Procedure removed" }); },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+}
+
+export function useMovePlanItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ a, b }: { a: { id: string; visit_number: number }; b: { id: string; visit_number: number } }) => {
+      const db = supabase as any;
+      const r1 = await db.from("treatment_plan_items").update({ visit_number: b.visit_number }).eq("id", a.id);
+      if (r1.error) throw r1.error;
+      const r2 = await db.from("treatment_plan_items").update({ visit_number: a.visit_number }).eq("id", b.id);
+      if (r2.error) throw r2.error;
+    },
+    onSuccess: () => invalidateAll(qc),
   });
 }
