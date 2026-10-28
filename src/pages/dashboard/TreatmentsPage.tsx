@@ -57,7 +57,7 @@ export default function TreatmentsPage() {
   const { currentOrg } = useOrg();
   const orgRole = currentOrg?.role || "";
   const isAdmin = orgRole === "owner" || orgRole === "admin";
-  const canEditCatalog = isAdmin || orgRole === "dentist" || orgRole === "manager";
+  const canEditCatalog = isAdmin || orgRole === "dentist";
   const isClinical = isAdmin || orgRole === "dentist" || orgRole === "hygienist";
 
   const [dialogOpen, setDialogOpen] = useState(false);

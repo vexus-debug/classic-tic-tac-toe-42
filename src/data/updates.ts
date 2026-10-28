@@ -20,7 +20,7 @@ export const updates: UpdateEntry[] = [
     items: [
       { kind: "fix", text: "Treatment prices are now bold and easy to read in dark mode." },
       { kind: "fix", text: "Tap any treatment card to edit it; edit buttons are always visible on phones." },
-      { kind: "improvement", text: "Dentists and managers can now edit catalog items." },
+      { kind: "improvement", text: "Dentists can now edit catalog items." },
       { kind: "feature", text: "Treatments can carry a CDT procedure code, a patient-friendly name and what they apply to (mouth, quadrant, tooth, surface)." },
     ],
   },
