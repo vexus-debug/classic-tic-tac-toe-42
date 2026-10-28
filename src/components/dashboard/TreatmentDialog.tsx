@@ -15,6 +15,13 @@ const treatmentTemplates = [
   { label: "Teeth Whitening", name: "Teeth Whitening", category: "Cosmetic", price: "80000", duration: "60 mins", description: "In-office whitening session." },
 ];
 
+const scopes = [
+  { v: "mouth", l: "Whole mouth" },
+  { v: "quadrant", l: "Quadrant" },
+  { v: "tooth", l: "Single tooth" },
+  { v: "surface", l: "Tooth surface" },
+];
+
 const categories = ["General", "Cosmetic", "Orthodontics", "Restorative", "Surgical", "Periodontics", "Preventive"];
 
 interface TreatmentDialogProps {
@@ -28,7 +35,7 @@ export function TreatmentDialog({ treatment, open, onOpenChange }: TreatmentDial
   const updateTreatment = useUpdateTreatment();
   const isEdit = !!treatment;
 
-  const [form, setForm] = useState({ name: "", category: "General", price: "", duration: "", description: "" });
+  const [form, setForm] = useState({ name: "", category: "General", price: "", duration: "", description: "", cdt_code: "", patient_name: "", site_scope: "tooth" });
 
   useEffect(() => {
     if (treatment) {
@@ -38,15 +45,18 @@ export function TreatmentDialog({ treatment, open, onOpenChange }: TreatmentDial
         price: String(treatment.price),
         duration: treatment.duration || "",
         description: treatment.description || "",
+        cdt_code: treatment.cdt_code || "",
+        patient_name: treatment.patient_name || "",
+        site_scope: treatment.site_scope || "tooth",
       });
     } else {
-      setForm({ name: "", category: "General", price: "", duration: "", description: "" });
+      setForm({ name: "", category: "General", price: "", duration: "", description: "", cdt_code: "", patient_name: "", site_scope: "tooth" });
     }
   }, [treatment, open]);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return;
-    const payload = { name: form.name, category: form.category, price: parseFloat(form.price) || 0, duration: form.duration, description: form.description };
+    const payload = { name: form.name, category: form.category, price: parseFloat(form.price) || 0, duration: form.duration, description: form.description, cdt_code: form.cdt_code.trim().toUpperCase() || null, patient_name: form.patient_name.trim() || null, site_scope: form.site_scope };
     if (isEdit && treatment) {
       await updateTreatment.mutateAsync({ id: treatment.id, ...payload });
     } else {
@@ -59,7 +69,7 @@ export function TreatmentDialog({ treatment, open, onOpenChange }: TreatmentDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{isEdit ? "Edit Treatment" : "Add Treatment"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {!isEdit && (
@@ -73,7 +83,7 @@ export function TreatmentDialog({ treatment, open, onOpenChange }: TreatmentDial
                     variant="outline"
                     size="sm"
                     className="h-7 text-[11px]"
-                    onClick={() => setForm({ name: t.name, category: t.category, price: t.price, duration: t.duration, description: t.description })}
+                    onClick={() => setForm({ ...form, name: t.name, category: t.category, price: t.price, duration: t.duration, description: t.description })}
                   >
                     {t.label}
                   </Button>
@@ -85,7 +95,26 @@ export function TreatmentDialog({ treatment, open, onOpenChange }: TreatmentDial
             <Label className="text-xs">Name *</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Procedure code (CDT)</Label>
+              <Input value={form.cdt_code} onChange={(e) => setForm({ ...form, cdt_code: e.target.value })} placeholder="e.g. D2740" maxLength={8} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Applies to</Label>
+              <Select value={form.site_scope} onValueChange={(v) => setForm({ ...form, site_scope: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {scopes.map((s) => <SelectItem key={s.v} value={s.v}>{s.l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Patient-friendly name</Label>
+            <Input value={form.patient_name} onChange={(e) => setForm({ ...form, patient_name: e.target.value })} placeholder="e.g. Ceramic tooth cap" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Category</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>

@@ -57,6 +57,7 @@ export default function TreatmentsPage() {
   const { currentOrg } = useOrg();
   const orgRole = currentOrg?.role || "";
   const isAdmin = orgRole === "owner" || orgRole === "admin";
+  const canEditCatalog = isAdmin || orgRole === "dentist" || orgRole === "manager";
   const isClinical = isAdmin || orgRole === "dentist" || orgRole === "hygienist";
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -208,7 +209,7 @@ export default function TreatmentsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search treatments..." className="pl-9 bg-muted/30 border-border/40" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            {isAdmin && (
+            {canEditCatalog && (
               <Button size="sm" className="bg-secondary hover:bg-secondary/90 shadow-lg shadow-secondary/20" onClick={() => { setEditTreatment(null); setDialogOpen(true); }} data-tour="treatments-add-treatment">
                 <Plus className="mr-2 h-4 w-4" /> Add Treatment
               </Button>
@@ -234,27 +235,38 @@ export default function TreatmentsPage() {
                   <motion.div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" variants={stagger.container} initial="hidden" animate="visible">
                     {catTreatments.map((t) => (
                       <motion.div key={t.id} variants={stagger.item}>
-                        <Card className="glass-card hover:shadow-lg hover:shadow-secondary/5 transition-all duration-300 group hover:border-secondary/20">
+                        <Card
+                          className={`glass-card hover:shadow-lg transition-all duration-300 group hover:border-primary/30 ${canEditCatalog ? "cursor-pointer active:scale-[0.99]" : ""}`}
+                          onClick={canEditCatalog ? () => { setEditTreatment(t); setDialogOpen(true); } : undefined}
+                        >
                           <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-medium text-sm group-hover:text-secondary transition-colors">{t.name}</p>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {t.cdt_code && <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-muted text-foreground">{t.cdt_code}</span>}
+                                  <p className="font-medium text-sm text-foreground">{t.name}</p>
+                                </div>
+                                {t.patient_name && <p className="text-xs text-foreground/80 mt-0.5">“{t.patient_name}”</p>}
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.description}</p>
                               </div>
-                              {isAdmin && (
-                                <div className="flex gap-1 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditTreatment(t); setDialogOpen(true); }}>
-                                    <Pencil className="h-3.5 w-3.5" />
+                              {canEditCatalog && (
+                                <div className="flex gap-1 shrink-0 opacity-100 md:opacity-60 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Edit treatment" onClick={() => { setEditTreatment(t); setDialogOpen(true); }}>
+                                    <Pencil className="h-4 w-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
+                                  {isAdmin && (
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" aria-label="Delete treatment" onClick={() => handleDelete(t.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                 </div>
                               )}
                             </div>
-                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30">
-                              <span className="text-sm font-bold text-secondary">₦{t.price.toLocaleString()}</span>
-                              <span className="text-[10px] text-muted-foreground font-mono">{t.duration}</span>
+                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/30 gap-2">
+                              <span className="text-base font-bold text-foreground tabular-nums">₦{t.price.toLocaleString()}</span>
+                              <span className="text-[10px] text-muted-foreground font-mono text-right">
+                                {t.site_scope ? ({ mouth: "Whole mouth", quadrant: "Quadrant", tooth: "Per tooth", surface: "Per surface" } as Record<string, string>)[t.site_scope] + " · " : ""}{t.duration}
+                              </span>
                             </div>
                           </CardContent>
                         </Card>

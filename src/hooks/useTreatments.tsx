@@ -10,6 +10,9 @@ export interface Treatment {
   price: number;
   duration: string;
   description: string;
+  cdt_code?: string | null;
+  patient_name?: string | null;
+  site_scope?: string | null;
   [key: string]: any;
 }
 
